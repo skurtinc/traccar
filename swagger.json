@@ -1292,6 +1292,9 @@
                         "distance": {
                             "type": "number"
                         },
+                        "totalDistance": {
+                            "type": "number"
+                        },
                         "ip": {
                             "type": "string"
                         },
