@@ -180,6 +180,11 @@ public class Xt2400ProtocolDecoder extends BaseProtocolDecoder {
                 case 0x73:
                     position.set(Position.KEY_VERSION_FW, buf.readBytes(16).toString(StandardCharsets.US_ASCII).trim());
                     break;
+                case 0x54:
+                    position.set(Position.KEY_ODOMETER, buf.readUnsignedInt());
+                    break;
+                case 0x5a:
+                    position.set(Position.KEY_FUEL_LEVEL, buf.readUnsignedShort() * 0.1);
                 default:
                     buf.skipBytes(getTagLength(tag));
                     break;
