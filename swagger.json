@@ -1259,7 +1259,50 @@
                 "network": {
                     "type": "string"
                 },
-                "attributes": {}
+                "attributes": {
+                    "type": "object",
+                    "properties": {
+                        "event": {
+                            "type": "number"
+                        },
+                        "obdSpeed": {
+                            "type": "number"
+                        },
+                        "sat": {
+                            "type": "number"
+                        },
+                        "hdop": {
+                            "type": "number"
+                        },
+                        "power": {
+                            "type": "number"
+                        },
+                        "rssi": {
+                            "type": "number"
+                        },
+                        "tripOdometer": {
+                            "type": "number"
+                        },
+                        "index": {
+                            "type": "number"
+                        },
+                        "vin": {
+                            "type": "string"
+                        },
+                        "distance": {
+                            "type": "number"
+                        },
+                        "totalDistance": {
+                            "type": "number"
+                        },
+                        "ip": {
+                            "type": "string"
+                        },
+                        "motion": {
+                            "type": "boolean"
+                        }
+                    }
+                }
             }
         },
         "User": {
