@@ -15,14 +15,25 @@
  */
 package org.traccar;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
+import javax.json.Json;
+import javax.json.JsonObject;
+import com.bettercloud.vault.SslConfig;
+import com.bettercloud.vault.Vault;
+import com.bettercloud.vault.VaultConfig;
 
 public class Config {
 
     private final Properties properties = new Properties();
+    private Vault vault;
 
     private boolean useEnvironmentVariables;
 
@@ -43,16 +54,57 @@ public class Config {
 
         useEnvironmentVariables = Boolean.parseBoolean(System.getenv("CONFIG_USE_ENVIRONMENT_VARIABLES"))
                 || Boolean.parseBoolean(properties.getProperty("config.useEnvironmentVariables"));
+        setupVault();
+    }
+
+    private void setupVault() {
+        String kubeValueCredsPath = System.getenv("CONFIG_KUBE_VAULT_CREDS_PATH");
+        if (kubeValueCredsPath == null) {
+            return;
+        }
+        Path vaultTokenFile = Paths.get(kubeValueCredsPath, "vault-token");
+        Path vaultCACert = Paths.get(kubeValueCredsPath, "ca.crt");
+        try (Reader reader = new FileReader(vaultTokenFile.toString())) {
+            JsonObject token = Json.createReader(reader).readObject();
+            final VaultConfig vaultConfig = new VaultConfig()
+                                          .address(token.getString("vaultAddr"))
+                                          .token(token.getString("clientToken"))
+                                          .sslConfig(new SslConfig().pemFile(new File(vaultCACert.toString())).build())
+                                          .build();
+            vault = new Vault(vaultConfig);
+        } catch (Exception e) {
+            return;
+        }
     }
 
     public boolean hasKey(String key) {
-        return useEnvironmentVariables && System.getenv().containsKey(getEnvironmentVariableName(key))
+        boolean present;
+        if (vault != null) {
+            try {
+                String value = vault.logical().read("secret/traccar").getData().get(key);
+                if (value != null) {
+                    present = true;
+                }
+            } catch (Exception e) {
+                present = false;
+            }
+        }
+        present = useEnvironmentVariables && System.getenv().containsKey(getEnvironmentVariableName(key))
                 || properties.containsKey(key);
+        return present;
     }
 
     public String getString(String key) {
+        String value;
+        if (vault != null) {
+            try {
+                value = vault.logical().read("secret/traccar").getData().get(key);
+            } catch (Exception e) {
+                value = null;
+            }
+        }
         if (useEnvironmentVariables) {
-            String value = System.getenv(getEnvironmentVariableName(key));
+            value = System.getenv(getEnvironmentVariableName(key));
             if (value != null && !value.isEmpty()) {
                 return value;
             }
