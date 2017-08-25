@@ -29,6 +29,7 @@ import javax.json.JsonObject;
 import com.bettercloud.vault.SslConfig;
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
+import com.bettercloud.vault.VaultException;
 
 public class Config {
 
@@ -37,7 +38,7 @@ public class Config {
 
     private boolean useEnvironmentVariables;
 
-    void load(String file) throws IOException {
+    void load(String file) throws IOException, VaultException {
         Properties mainProperties = new Properties();
         try (InputStream inputStream = new FileInputStream(file)) {
             mainProperties.loadFromXML(inputStream);
@@ -57,7 +58,7 @@ public class Config {
         setupVault();
     }
 
-    private void setupVault() {
+    private void setupVault() throws VaultException, IOException {
         String kubeValueCredsPath = System.getenv("CONFIG_KUBE_VAULT_CREDS_PATH");
         if (kubeValueCredsPath == null) {
             return;
@@ -72,8 +73,8 @@ public class Config {
                                           .sslConfig(new SslConfig().pemFile(new File(vaultCACert.toString())).build())
                                           .build();
             vault = new Vault(vaultConfig);
-        } catch (Exception e) {
-            return;
+        } catch (VaultException | IOException e) {
+            throw e;
         }
     }
 
