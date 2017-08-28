@@ -15,6 +15,10 @@
  */
 package org.traccar;
 
+import com.bettercloud.vault.SslConfig;
+import com.bettercloud.vault.Vault;
+import com.bettercloud.vault.VaultConfig;
+import com.bettercloud.vault.VaultException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
@@ -26,13 +30,13 @@ import java.nio.file.Paths;
 import java.util.Properties;
 import javax.json.Json;
 import javax.json.JsonObject;
-import com.bettercloud.vault.SslConfig;
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultConfig;
-import com.bettercloud.vault.VaultException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class Config {
 
+    private final Logger logger = LoggerFactory.getLogger(Config.class);
     private final Properties properties = new Properties();
     private Vault vault;
 
@@ -41,12 +45,14 @@ public class Config {
     void load(String file) throws IOException, VaultException {
         Properties mainProperties = new Properties();
         try (InputStream inputStream = new FileInputStream(file)) {
+            logger.info("Loading properties file from {}", file);
             mainProperties.loadFromXML(inputStream);
         }
 
         String defaultConfigFile = mainProperties.getProperty("config.default");
         if (defaultConfigFile != null) {
             try (InputStream inputStream = new FileInputStream(defaultConfigFile)) {
+                logger.info("Loading defaults from {}", defaultConfigFile);
                 properties.loadFromXML(inputStream);
             }
         }
@@ -55,6 +61,7 @@ public class Config {
 
         useEnvironmentVariables = Boolean.parseBoolean(System.getenv("CONFIG_USE_ENVIRONMENT_VARIABLES"))
                 || Boolean.parseBoolean(properties.getProperty("config.useEnvironmentVariables"));
+        logger.info("useEnvironmentVariables set to {}", useEnvironmentVariables);
         setupVault();
     }
 
@@ -63,16 +70,26 @@ public class Config {
         if (kubeValueCredsPath == null) {
             return;
         }
+        logger.info("Configuring vault using kubernetes-vault");
         Path vaultTokenFile = Paths.get(kubeValueCredsPath, "vault-token");
         Path vaultCACert = Paths.get(kubeValueCredsPath, "ca.crt");
         try (Reader reader = new FileReader(vaultTokenFile.toString())) {
             JsonObject token = Json.createReader(reader).readObject();
+            File caCert = new File(vaultCACert.toString());
+            SslConfig sslConfig = new SslConfig();
+            String vaultAddr = token.getString("vaultAddr");
+            if (caCert.exists()) {
+                logger.info("Found Vault CA cert at {}", vaultCACert);
+                sslConfig.pemFile(caCert);
+            }
+            sslConfig.build();
             final VaultConfig vaultConfig = new VaultConfig()
-                                          .address(token.getString("vaultAddr"))
+                                          .address(vaultAddr)
                                           .token(token.getString("clientToken"))
-                                          .sslConfig(new SslConfig().pemFile(new File(vaultCACert.toString())).build())
+                                          .sslConfig(sslConfig)
                                           .build();
             vault = new Vault(vaultConfig);
+            logger.info("Successfully configured Vault at {}", vaultAddr);
         } catch (VaultException | IOException e) {
             throw e;
         }
@@ -81,12 +98,15 @@ public class Config {
     public boolean hasKey(String key) {
         boolean present;
         if (vault != null) {
+            logger.info("Atttempting to fetch key {} from vault", key);
             try {
                 String value = vault.logical().read("secret/traccar").getData().get(key);
                 if (value != null) {
+                    logger.info("Found value for key {} in vault", key);
                     present = true;
                 }
-            } catch (Exception e) {
+            } catch (VaultException e) {
+                logger.info("Caught exception while trying to read key {} from Vault {}", key, e.getMessage());
                 present = false;
             }
         }
@@ -100,8 +120,13 @@ public class Config {
         if (vault != null) {
             try {
                 value = vault.logical().read("secret/traccar").getData().get(key);
-            } catch (Exception e) {
+            } catch (VaultException e) {
+                logger.info("Caught exception while trying to read key {} from Vault {}", key, e.getMessage());
                 value = null;
+            }
+            if (value != null && !value.isEmpty()) {
+                logger.info("Found value for key {} in vault", key);
+                return value;
             }
         }
         if (useEnvironmentVariables) {
