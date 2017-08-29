@@ -122,6 +122,8 @@ public class DataManager {
                 hikariConfig.setMaximumPoolSize(maxPoolSize);
             }
 
+            hikariConfig.validate();
+
             generateQueries = config.getBoolean("database.generateQueries");
 
             dataSource = new HikariDataSource(hikariConfig);
@@ -281,9 +283,9 @@ public class DataManager {
             ResourceAccessor resourceAccessor = new FileSystemResourceAccessor();
 
             Database database = DatabaseFactory.getInstance().openDatabase(
-                    config.getString("database.url"),
-                    config.getString("database.user"),
-                    config.getString("database.password"),
+                    config.getSecret("database.url"),
+                    config.getSecret("database.user"),
+                    config.getSecret("database.password"),
                     null, resourceAccessor);
 
             Liquibase liquibase = new Liquibase(
