@@ -110,9 +110,9 @@ public class DataManager {
 
             HikariConfig hikariConfig = new HikariConfig();
             hikariConfig.setDriverClassName(config.getString("database.driver"));
-            hikariConfig.setJdbcUrl(config.getString("database.url"));
-            hikariConfig.setUsername(config.getString("database.user"));
-            hikariConfig.setPassword(config.getString("database.password"));
+            hikariConfig.setJdbcUrl(config.getSecret("database.url"));
+            hikariConfig.setUsername(config.getSecret("database.user"));
+            hikariConfig.setPassword(config.getSecret("database.password"));
             hikariConfig.setConnectionInitSql(config.getString("database.checkConnection", "SELECT 1"));
             hikariConfig.setIdleTimeout(600000);
 

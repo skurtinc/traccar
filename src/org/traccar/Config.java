@@ -97,27 +97,15 @@ public class Config {
 
     public boolean hasKey(String key) {
         boolean present;
-        if (vault != null) {
-            logger.info("Atttempting to fetch key {} from vault", key);
-            try {
-                String value = vault.logical().read("secret/traccar").getData().get(key);
-                if (value != null) {
-                    logger.info("Found value for key {} in vault", key);
-                    present = true;
-                }
-            } catch (VaultException e) {
-                logger.info("Caught exception while trying to read key {} from Vault {}", key, e.getMessage());
-                present = false;
-            }
-        }
         present = useEnvironmentVariables && System.getenv().containsKey(getEnvironmentVariableName(key))
                 || properties.containsKey(key);
         return present;
     }
 
-    public String getString(String key) {
-        String value;
+    public String getSecret(String key) {
         if (vault != null) {
+            String value;
+            logger.info("Atttempting to fetch key {} from vault", key);
             try {
                 value = vault.logical().read("secret/traccar").getData().get(key);
             } catch (VaultException e) {
@@ -129,6 +117,11 @@ public class Config {
                 return value;
             }
         }
+        return getString(key);
+    }
+
+    public String getString(String key) {
+        String value;
         if (useEnvironmentVariables) {
             value = System.getenv(getEnvironmentVariableName(key));
             if (value != null && !value.isEmpty()) {
