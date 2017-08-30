@@ -1300,6 +1300,12 @@
                         },
                         "motion": {
                             "type": "boolean"
+                        },
+                        "fuel": {
+                            "type": "number"
+                        },
+                        "odometer": {
+                            "type": "number"
                         }
                     }
                 }
