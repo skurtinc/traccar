@@ -562,6 +562,10 @@ public class Gl200TextProtocolDecoder extends BaseProtocolDecoder {
         position.set(Position.KEY_FUEL_LEVEL, parser.nextInt());
 
         decodeDeviceTime(position, parser);
+        if (ignoreFixTime) {
+            positions.clear();
+            positions.add(position);
+        }
 
         return positions;
     }
@@ -614,12 +618,16 @@ public class Gl200TextProtocolDecoder extends BaseProtocolDecoder {
                 for (int i = 1; i <= deviceCount; i++) {
                     index++; // id
                     index++; // type
-                    position.set(Position.PREFIX_TEMP + i, Short.parseShort(data[index++], 16) * 0.0625);
+                    position.set(Position.PREFIX_TEMP + i, (short) Integer.parseInt(data[index++], 16) * 0.0625);
                 }
             }
         }
 
         decodeDeviceTime(position, parser);
+        if (ignoreFixTime) {
+            positions.clear();
+            positions.add(position);
+        }
 
         return positions;
     }

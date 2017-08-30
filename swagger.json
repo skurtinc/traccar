@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "version": "3.10",
+        "version": "3.13",
         "title": "traccar"
     },
     "host": "demo.traccar.org",
@@ -317,9 +317,12 @@
                     {
                         "name" : "id",
                         "in" : "query",
-                        "description" : "To fetch one or more positions. Multiple params can be passed like `id=31&id=42`",
+                        "description" : "To fetch one or more positions, pass in array of ids",
                         "required" : false,
-                        "type" : "integer",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },                       
                         "collectionFormat" : "multi"
                     }
                 ],
@@ -1300,6 +1303,12 @@
                         },
                         "motion": {
                             "type": "boolean"
+                        },
+                        "fuel": {
+                            "type": "number"
+                        },
+                        "odometer": {
+                            "type": "number"
                         }
                     }
                 }
