@@ -1309,6 +1309,9 @@
                         },
                         "odometer": {
                             "type": "number"
+                        },
+                        "systemState": {			                 
+                            "type": "number"
                         }
                     }
                 }
