@@ -25,4 +25,4 @@ EXPOSE 5000-5150
 
 WORKDIR /opt/traccar
 
-ENTRYPOINT ["java","-jar","traccar-server.jar","traccar.xml"]
+ENTRYPOINT java $JAVA_OPTS -jar traccar-server.jar traccar.xml

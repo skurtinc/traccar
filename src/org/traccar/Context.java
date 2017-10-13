@@ -277,7 +277,7 @@ public final class Context {
         objectMapper.setConfig(
                 objectMapper.getSerializationConfig().without(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS));
 
-        if (config.hasKey("database.url")) {
+        if (config.getSecret("database.url") != null) {
             dataManager = new DataManager(config);
         }
 

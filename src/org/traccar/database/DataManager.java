@@ -110,9 +110,9 @@ public class DataManager {
 
             HikariConfig hikariConfig = new HikariConfig();
             hikariConfig.setDriverClassName(config.getString("database.driver"));
-            hikariConfig.setJdbcUrl(config.getString("database.url"));
-            hikariConfig.setUsername(config.getString("database.user"));
-            hikariConfig.setPassword(config.getString("database.password"));
+            hikariConfig.setJdbcUrl(config.getSecret("database.url"));
+            hikariConfig.setUsername(config.getSecret("database.user"));
+            hikariConfig.setPassword(config.getSecret("database.password"));
             hikariConfig.setConnectionInitSql(config.getString("database.checkConnection", "SELECT 1"));
             hikariConfig.setIdleTimeout(600000);
 
@@ -121,6 +121,8 @@ public class DataManager {
             if (maxPoolSize != 0) {
                 hikariConfig.setMaximumPoolSize(maxPoolSize);
             }
+
+            hikariConfig.validate();
 
             generateQueries = config.getBoolean("database.generateQueries");
 
@@ -281,9 +283,9 @@ public class DataManager {
             ResourceAccessor resourceAccessor = new FileSystemResourceAccessor();
 
             Database database = DatabaseFactory.getInstance().openDatabase(
-                    config.getString("database.url"),
-                    config.getString("database.user"),
-                    config.getString("database.password"),
+                    config.getSecret("database.url"),
+                    config.getSecret("database.user"),
+                    config.getSecret("database.password"),
                     null, resourceAccessor);
 
             Liquibase liquibase = new Liquibase(
